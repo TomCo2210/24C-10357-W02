@@ -8,4 +8,5 @@
     <dimen name="all_hearts_width">140dp</dimen>
     <dimen name="all_heart_height">40dp</dimen>
     <dimen name="heart_margin">10dp</dimen>
+    <dimen name="score_size">72sp</dimen>
 </resources>

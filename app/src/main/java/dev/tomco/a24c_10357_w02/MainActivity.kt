@@ -1,6 +1,8 @@
 package dev.tomco.a24c_10357_w02
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -9,6 +11,8 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textview.MaterialTextView
+import dev.tomco.a24c_10357_w02.logic.GameManager
+import dev.tomco.a24c_10357_w02.utilities.Constants
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,29 +29,26 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var main_IMG_hearts: Array<ShapeableImageView>
 
-    private var score: Int = 0
+    private lateinit var gameManager: GameManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         findViews()
+        gameManager = GameManager(main_IMG_hearts.size)
         initViews()
     }
 
     private fun initViews() {
-        main_LBL_score.text = score.toString()
-        main_BTN_yes.setOnClickListener { view: View? -> increase() }
-        main_BTN_no.setOnClickListener { view: View? -> decrease() }
+        main_LBL_score.text = gameManager.score.toString()
+        main_BTN_yes.setOnClickListener { view: View? -> answerClicked(true) }
+        main_BTN_no.setOnClickListener { view: View? -> answerClicked(false) }
+        refreshUI()
     }
 
-    private fun decrease() {
-        this.score -= 10
-        main_LBL_score.text = score.toString()
-    }
-
-    private fun increase() {
-        this.score += 10
-        main_LBL_score.text = score.toString()
+    private fun answerClicked(expected: Boolean) {
+        gameManager.checkAnswer(expected = expected)
+        refreshUI()
     }
 
     private fun findViews() {
@@ -63,9 +64,36 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    private fun refreshUI() {
+        if (gameManager.isGameLost) { // Lost:
+            Log.d("Game Status", "Game Over! " + gameManager.score)
+            changeActivity("😭Game Over! ",gameManager.score)
+        } else if (gameManager.isGameEnded) { // Won:
+            Log.d("Game Status", "You Won! " + gameManager.score)
+            changeActivity("🥳You Won! ",gameManager.score)
+        } else { // Ongoing:
+            main_LBL_score.text = gameManager.score.toString()
+            main_LBL_countryName.text = gameManager.currentCountry.name
+            main_IMG_flag.setImageResource(gameManager.currentCountry.flagImage)
+            if (gameManager.wrongAnswers != 0) {
+                main_IMG_hearts[main_IMG_hearts.size - gameManager.wrongAnswers].visibility =
+                    View.INVISIBLE
+            }
+        }
 
-    //TODO:
-    // 1) countries - data
+    }
+
+    private fun changeActivity(message: String, score: Int) {
+        val intent = Intent(this, ScoreActivity::class.java);
+        var bundle = Bundle()
+        bundle.putInt(Constants.SCORE_KEY, score)
+        bundle.putString(Constants.STATUS_KEY, message)
+        intent.putExtras(bundle)
+        startActivity(intent)
+        finish()
+    }
+
+
     // 2) reduce hearts - game logic
     // 3) change countries - questions.
     // 4) Score Activity
